@@ -71,6 +71,15 @@ class Node:
             values.add(self.value)
             return values
 
+    def get_leaf_values(self):
+        """Returns a sorted list of the values of the leaves in this subtree."""
+        if self.is_leaf():  return [self.value]
+        else:
+            values = self.right.get_leaf_values()
+            values.extend(self.left.get_leaf_values())
+            return sorted(values)
+
+
     def place_leaf_value(self, leaf_value, permutation):
         """Plays the 'token game' with leaf_value,
         where permutation is a list that dictates
@@ -133,6 +142,34 @@ class Node:
             return self.value!=None
         else:
             return self.left.is_complete and self.right.is_complete()
+
+    def is_primitive_block(self):
+        """Returns True if the leaves of the substree span an interval completely."""
+        leaves = self.get_leaf_values()
+
+        #go through all leaves and check that differ by 1
+        for i in range(len(leaves)-1):
+            if not leaves[i+1]-leaves[i]==1:
+                return False
+        return True
+
+    def contains_primitive_block(self):
+        """Returns True if the subtree contains a primitive block."""
+        if self.is_leaf():
+            return False
+        else:
+            return (self.is_primitive_block() or
+                    self.right.contains_primitive_block() or
+                    self.left.contains_primitive_block())
+    
+    def is_primitive(self):
+        """Returns True if the tree is primitive, i.e. the tree cannot
+        be decomposed into other primitive trees."""
+        if (self.right.contains_primitive_block() or
+                self.left.contains_primitive_block()):
+            return False
+        return True
+
 
     def __str__(self):
         return tree_to_bracket(self).__str__()
@@ -215,12 +252,22 @@ def perm_to_tree(permutation):
     for leaf in range(1, len(p)+2):
         root.place_leaf_value(leaf, permutation)
 
-    return tree_to_bracket(root)
+    return root
 
 
+#p = [1,2,3]#[2,3,4,5,1]
+#root = perm_to_tree(p)
+#print(root.is_primitive())
 
 
-
+for n in range(1, 7): #size of permutation
+    print(n)
+    perms = permutations(list(range(1,n+1)))
+    for p in perms: #creates trees out of all permutations of 1...n
+        tree = perm_to_tree(p)
+        if tree.is_primitive():
+            print("Perm:", p, "|", "Tree:",tree)
+    print("***********")
 
 # tests that all trees created by permutations of 1...n are unique
 """
